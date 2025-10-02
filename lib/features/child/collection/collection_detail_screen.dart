@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
-import '../../../services/hive/hive_service.dart';
+import '../../../core/constants/app_colors.dart';
+import 'collection_viewmodel.dart';
 
-class CollectionDetailScreen extends StatefulWidget {
+class CollectionDetailScreen extends ConsumerWidget {
   final String category;
   final String title;
 
@@ -13,51 +15,27 @@ class CollectionDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<CollectionDetailScreen> createState() => _CollectionDetailScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 🔹 Sticker listesi provider’dan
+    final stickers =
+    ref.watch(collectionProvider.notifier).getStickersByCategory(category);
 
-class _CollectionDetailScreenState extends State<CollectionDetailScreen> {
-  late List stickers;
-  bool showAnimation = false;
+    // 🔹 Limit provider’dan alınıyor
+    final totalCount =
+    ref.watch(collectionProvider.notifier).getLimitByCategory(category);
 
-  // 🔹 Kategori limitleri (tam koleksiyon için)
-  final limits = {
-    "princess": 20,
-    "superheroes": 20,
-    "flowers": 20,
-    "cars": 20,
-    "jobs": 10,
-  };
+    // 🔹 Koleksiyon tamamlanma durumu
+    final isCompleted = stickers.length >= totalCount;
 
-  // 🔹 Koleksiyon tamamlandığında oynatılacak animasyonlar
-  final animations = {
-    "princess": "assets/animations/anim_confetti.json",
-    "superheroes": "assets/animations/anim_confetti.json",
-    "flowers": "assets/animations/anim_confetti.json",
-    "cars": "assets/animations/anim_confetti.json",
-    "jobs": "assets/animations/anim_confetti.json",
-  };
-
-  @override
-  void initState() {
-    super.initState();
-    // Hive’dan sticker listesini çek
-    stickers = HiveService.stickersBox.get(widget.category, defaultValue: <String>[])!;
-
-    // Koleksiyon tamamlandı mı kontrol et
-    final limit = limits[widget.category] ?? 0;
-    if (stickers.length >= limit && limit > 0) {
-      showAnimation = true;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      appBar: AppBar(
+        title: Text("$title (${stickers.length} / $totalCount)"),
+        backgroundColor: AppColors.pastelPurple,
+        foregroundColor: Colors.white,
+      ),
+      backgroundColor: AppColors.neutralGrey,
       body: Stack(
         children: [
-          // 🔹 Sticker grid
           GridView.builder(
             padding: const EdgeInsets.all(16),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -65,34 +43,55 @@ class _CollectionDetailScreenState extends State<CollectionDetailScreen> {
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
             ),
-            itemCount: stickers.length,
+            itemCount: totalCount,
             itemBuilder: (context, index) {
-              final sticker = stickers[index];
-              return Image.asset(
-                "assets/stickers/${widget.category}/$sticker.png",
-                errorBuilder: (_, __, ___) =>
-                const Icon(Icons.image_not_supported),
+              final hasSticker = index < stickers.length;
+
+              return Container(
+                decoration: BoxDecoration(
+                  color: hasSticker ? AppColors.mintGreen : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.black12),
+                ),
+                child: hasSticker
+                    ? Image.asset(
+                  "assets/stickers/$category/${stickers[index]}.png",
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) =>
+                  const Icon(Icons.image_not_supported),
+                )
+                    : const Icon(Icons.lock_outline, color: Colors.grey),
               );
             },
           ),
 
-          // 🔹 Koleksiyon tamamlandığında animasyon göster
-          if (showAnimation)
+          // 🔹 Koleksiyon tamamlandıysa kategoriye özel animasyon
+          if (isCompleted)
             Center(
               child: Lottie.asset(
-                animations[widget.category] ?? "",
+                "assets/animations/${_getAnimationFile(category)}",
                 repeat: false,
-                onLoaded: (_) {
-                  Future.delayed(const Duration(seconds: 3), () {
-                    if (mounted) {
-                      setState(() => showAnimation = false);
-                    }
-                  });
-                },
               ),
             ),
         ],
       ),
     );
+  }
+
+  String _getAnimationFile(String category) {
+    switch (category) {
+      case "princess":
+        return "anim_princess_complete.json";
+      case "superheroes":
+        return "anim_superhero_complete.json";
+      case "flowers":
+        return "anim_flower_complete.json";
+      case "cars":
+        return "anim_car_complete.json";
+      case "jobs":
+        return "anim_job_complete.json";
+      default:
+        return "anim_confetti.json";
+    }
   }
 }

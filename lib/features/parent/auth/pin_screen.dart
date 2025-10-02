@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../services/hive/hive_service.dart';
 
 class PinScreen extends StatefulWidget {
   const PinScreen({super.key});
@@ -11,86 +11,90 @@ class PinScreen extends StatefulWidget {
 }
 
 class _PinScreenState extends State<PinScreen> {
-  late Box settingsBox;
   final TextEditingController _pinController = TextEditingController();
   String errorMessage = "";
 
-  @override
-  void initState() {
-    super.initState();
-    settingsBox = Hive.box("settingsBox");
+  Future<void> _checkPin() async {
+    final box = HiveService.settingsBox;
+    final savedPin = box.get("parentPin", defaultValue: "1234");
 
-    // Eğer hiç PIN yoksa default olarak "1234" kaydedelim
-    if (!settingsBox.containsKey("parentPIN")) {
-      settingsBox.put("parentPIN", "1234");
-    }
-  }
-
-  void _checkPin() {
-    final savedPin = settingsBox.get("parentPIN", defaultValue: "1234");
     if (_pinController.text == savedPin) {
-      context.go("/parent/panel");
+      context.go('/parent/panel');
     } else {
-      setState(() {
-        errorMessage = "Hatalı PIN, tekrar deneyin!";
-      });
+      setState(() => errorMessage = "Hatalı PIN!");
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.neutralGrey,
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  "Ebeveyn Girişi",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFE0BBE4), Color(0xFF957DAD), Color(0xFFD291BC)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                elevation: 6,
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset("assets/icons/icon_settings.png", height: 72),
+                      const SizedBox(height: 16),
+                      const Text(
+                        "Ebeveyn Girişi",
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _pinController,
+                        keyboardType: TextInputType.number,
+                        obscureText: true,
+                        maxLength: 4,
+                        textAlign: TextAlign.center,
+                        decoration: InputDecoration(
+                          counterText: "",
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      if (errorMessage.isNotEmpty)
+                        Text(errorMessage, style: const TextStyle(color: Colors.red)),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: _checkPin,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryBlue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          minimumSize: const Size(double.infinity, 50),
+                        ),
+                        icon: const Icon(Icons.lock_open, color: Colors.white),
+                        label: const Text(
+                          "Giriş Yap",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 20),
-
-                // PIN input
-                TextField(
-                  controller: _pinController,
-                  obscureText: true,
-                  maxLength: 4,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: "4 Haneli PIN",
-                  ),
-                ),
-
-                if (errorMessage.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    errorMessage,
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                ],
-
-                const SizedBox(height: 20),
-
-                ElevatedButton(
-                  onPressed: _checkPin,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryBlue,
-                    minimumSize: const Size(150, 48),
-                  ),
-                  child: const Text(
-                    "Giriş Yap",
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),

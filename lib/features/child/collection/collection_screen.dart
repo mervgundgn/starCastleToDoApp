@@ -1,75 +1,168 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/constants/app_colors.dart';
 import '../../../services/hive/hive_service.dart';
-import 'collection_detail_screen.dart';
 
-class CollectionScreen extends StatelessWidget {
+class CollectionScreen extends ConsumerWidget {
   const CollectionScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final categories = {
-      "princess": "Prensesler",
-      "superheroes": "Süper Kahramanlar",
-      "flowers": "Çiçekler",
-      "cars": "Arabalar",
-      "jobs": "Meslekler",
+  Widget build(BuildContext context, WidgetRef ref) {
+    final collections = {
+      "princess": {
+        "title": "Prensesler",
+        "count": 20,
+        "color": AppColors.softPink,
+        "cover": "assets/albums/princess/princess_cover.png"
+      },
+      "superheroes": {
+        "title": "Süper Kahramanlar",
+        "count": 20,
+        "color": AppColors.primaryBlue,
+        "cover": "assets/albums/superheroes/superhero_cover.png"
+      },
+      "flowers": {
+        "title": "Çiçekler",
+        "count": 20,
+        "color": AppColors.mintGreen,
+        "cover": "assets/albums/flowers/flower_cover.png"
+      },
+      "cars": {
+        "title": "Arabalar",
+        "count": 20,
+        "color": AppColors.sunnyYellow,
+        "cover": "assets/albums/cars/car_cover.png"
+      },
+      "jobs": {
+        "title": "Meslekler",
+        "count": 10,
+        "color": AppColors.pastelPurple,
+        "cover": "assets/albums/jobs/job_cover.png"
+      },
     };
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: GridView.builder(
+      appBar: AppBar(
+        title: const Text("Koleksiyon"),
+        backgroundColor: AppColors.primaryBlue,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      backgroundColor: AppColors.neutralGrey,
+      body: GridView.count(
         padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-        ),
-        itemCount: categories.length,
-        itemBuilder: (context, index) {
-          final key = categories.keys.elementAt(index);
-          final name = categories.values.elementAt(index);
+        crossAxisCount: 2,
+        childAspectRatio: 0.75,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        children: collections.entries.map((entry) {
+          final key = entry.key;
+          final title = entry.value["title"] as String;
+          final totalCount = entry.value["count"] as int;
+          final color = entry.value["color"] as Color;
+          final cover = entry.value["cover"] as String;
 
-          // 🔹 Hive’den kategoriye ait sticker listesi al
           final stickers =
           HiveService.stickersBox.get(key, defaultValue: <String>[]) as List;
-          final count = stickers.length;
+          final collectedCount = stickers.length;
+          final progress = collectedCount / totalCount;
 
           return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      CollectionDetailScreen(category: key, title: name),
-                ),
-              );
-            },
+            onTap: () => context.push("/collection/$key", extra: {
+              "title": title,
+              "color": color,
+            }),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: const [
+                gradient: LinearGradient(
+                  colors: [
+                    color.withOpacity(0.7),
+                    Colors.white,
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                boxShadow: [
                   BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 4,
-                    offset: Offset(2, 2),
-                  )
+                    color: color.withOpacity(0.3),
+                    blurRadius: 6,
+                    offset: const Offset(2, 3),
+                  ),
                 ],
               ),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(name,
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text("$count sticker"),
+                  // 📕 Kapak resmi
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(20),
+                      ),
+                      child: Image.asset(
+                        cover,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                        const Icon(Icons.broken_image, size: 64),
+                      ),
+                    ),
+                  ),
+                  // 📖 Alt bilgi alanı
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(20),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: color.darken(),
+                            )),
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            color: color,
+                            backgroundColor: Colors.grey[200],
+                            minHeight: 6,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "$collectedCount / $totalCount",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
                 ],
               ),
             ),
           );
-        },
+        }).toList(),
       ),
     );
+  }
+}
+
+// 🔹 küçük renk koyulaştırma helper
+extension ColorUtils on Color {
+  Color darken([double amount = .1]) {
+    final hsl = HSLColor.fromColor(this);
+    final hslDark = hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0));
+    return hslDark.toColor();
   }
 }
