@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 // 🔹 Çocuk tarafı
-import '../features/splash/splash_screen.dart';
 import '../features/child/home/home_screen.dart';
 import '../features/child/tasks/tasks_screen.dart';
 import '../features/child/collection/collection_screen.dart';
@@ -15,18 +14,17 @@ import '../features/parent/auth/pin_screen.dart';
 import '../features/parent/panel/parent_panel_screen.dart';
 import '../features/parent/reports/reports_screen.dart';
 import '../features/parent/settings/change_pin_screen.dart';
-import 'package:starcastle_todoapp/features/parent/settings/edit_profile_screen.dart';
+import '../features/parent/settings/edit_profile_screen.dart';
+
+// ✅ Ödül ekranları
+import '../features/parent/rewards/add_reward_screen.dart';
+import '../features/parent/rewards/manage_rewards_screen.dart';
 
 /// 🌍 Tüm uygulama router’ı
 final GoRouter appRouter = GoRouter(
-  initialLocation: "/splash",
+  // ✅ Splash kaldırıldı, uygulama açılışta ChildHomeScreen’den başlar
+  initialLocation: "/child/home",
   routes: [
-    // Splash
-    GoRoute(
-      path: "/splash",
-      builder: (context, state) => const SplashScreen(),
-    ),
-
     // 🔹 Çocuk akışı
     GoRoute(
       path: "/child/home",
@@ -88,5 +86,14 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const EditProfileScreen(),
     ),
 
+    // ✅ Ödül ekranları
+    GoRoute(
+      path: "/parent/add-reward",
+      builder: (context, state) => const AddRewardScreen(),
+    ),
+    GoRoute(
+      path: "/parent/manage-rewards",
+      builder: (context, state) => const ManageRewardsScreen(),
+    ),
   ],
 );

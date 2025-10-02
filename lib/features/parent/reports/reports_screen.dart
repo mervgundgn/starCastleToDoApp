@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../services/hive/hive_service.dart';
 import '../../../models/task_model.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/info_banner.dart';
 
 class ReportsScreen extends StatelessWidget {
   const ReportsScreen({super.key});
@@ -11,7 +12,7 @@ class ReportsScreen extends StatelessWidget {
     final tasks = HiveService.getTasks();
     final completedTasks = tasks.where((t) => t.isCompleted).toList();
 
-    // Sticker istatistikleri
+    // 🔹 Sticker istatistikleri
     final stickersBox = HiveService.stickersBox;
     final categories = {
       "princess": "Prensesler",
@@ -27,6 +28,9 @@ class ReportsScreen extends StatelessWidget {
       totalStickers += list.length;
     });
 
+    // 🔹 Gerçek ödüller
+    final rewards = HiveService.getRealRewards();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Raporlar"),
@@ -35,17 +39,16 @@ class ReportsScreen extends StatelessWidget {
       ),
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFE1BEE7), Color(0xFFF8BBD0), Color(0xFFE3F2FD)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+          image: DecorationImage(
+            image: AssetImage("assets/backgrounds/castle/bg_castle.png"),
+            fit: BoxFit.cover,
           ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: ListView(
             children: [
-              // 🔹 Özet Kartları → Wrap ile responsive
+              // 🔹 Özet Kartları
               Wrap(
                 spacing: 12,
                 runSpacing: 12,
@@ -72,23 +75,19 @@ class ReportsScreen extends StatelessWidget {
               const SizedBox(height: 20),
 
               // 🔹 Tamamlanan Görevler
-              Text(
-                "Tamamlanan Görevler",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple.shade600,
-                ),
-              ),
+              _buildSectionTitle("Tamamlanan Görevler"),
               const SizedBox(height: 8),
               if (completedTasks.isEmpty)
-                const Text("Henüz görev tamamlanmamış.")
+                const InfoBanner(
+                  text: "Henüz görev tamamlanmamış.\nGörevleri tamamladıkça burada listelenecek ✅",
+                )
               else
                 ...completedTasks.map(
                       (task) => Card(
-                    color: Colors.white.withOpacity(0.7),
+                    color: Colors.white.withOpacity(0.85),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     child: ListTile(
                       leading: const Icon(Icons.check_circle,
                           color: Colors.green, size: 28),
@@ -103,16 +102,8 @@ class ReportsScreen extends StatelessWidget {
               const SizedBox(height: 20),
 
               // 🔹 Sticker İstatistikleri
-              Text(
-                "Sticker İstatistikleri",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple.shade600,
-                ),
-              ),
+              _buildSectionTitle("Sticker İstatistikleri"),
               const SizedBox(height: 12),
-
               Wrap(
                 spacing: 12,
                 runSpacing: 12,
@@ -124,8 +115,8 @@ class ReportsScreen extends StatelessWidget {
                   stickersBox.get(key, defaultValue: <String>[]) as List;
 
                   return SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.42, // sabit genişlik
-                    height: 120, // sabit yükseklik → hepsi eşit
+                    width: MediaQuery.of(context).size.width * 0.42,
+                    height: 120,
                     child: Card(
                       color: Colors.white.withOpacity(0.8),
                       shape: RoundedRectangleBorder(
@@ -139,7 +130,7 @@ class ReportsScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: Colors.deepPurple.shade400,
+                              color: Colors.deepPurple.shade700,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -160,6 +151,30 @@ class ReportsScreen extends StatelessWidget {
                   );
                 }).toList(),
               ),
+
+              const SizedBox(height: 20),
+
+              // 🔹 Gerçek Ödüller
+              _buildSectionTitle("Gerçek Ödüller"),
+              const SizedBox(height: 8),
+              if (rewards.isEmpty)
+                const InfoBanner(
+                  text: "Henüz ödül eklenmemiş.\nÇocuğun sticker biriktirdiğinde alabileceği ödülleri buradan yönetebilirsin 🎁",
+                )
+              else
+                ...rewards.map(
+                      (reward) => Card(
+                    color: Colors.white.withOpacity(0.8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: ListTile(
+                      leading: const Icon(Icons.card_giftcard,
+                          color: Colors.purple, size: 28),
+                      title: Text(reward),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -170,7 +185,7 @@ class ReportsScreen extends StatelessWidget {
   Widget _buildStatCard(String title, String value, Color color) {
     return Card(
       elevation: 3,
-      color: Colors.white.withOpacity(0.8),
+      color: Colors.white.withOpacity(0.85),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
@@ -191,12 +206,30 @@ class ReportsScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Colors.deepPurple.shade700,
+                color: Colors.deepPurple.shade800,
               ),
               textAlign: TextAlign.center,
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String text) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: Colors.deepPurple.shade800,
+        shadows: [
+          Shadow(
+            color: Colors.black.withOpacity(0.15),
+            offset: const Offset(1, 1),
+            blurRadius: 2,
+          ),
+        ],
       ),
     );
   }

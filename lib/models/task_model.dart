@@ -14,13 +14,17 @@ class TaskModel extends HiveObject {
   bool isCompleted;
 
   @HiveField(3)
-  final String period; // 🔹 "daily" veya "weekly"
+  final String period; // "daily" veya "weekly"
+
+  @HiveField(4)
+  final bool isWeeklyAuto; // 🔹 otomatik haftalık görev mi?
 
   TaskModel({
     required this.title,
     required this.category,
     this.isCompleted = false,
-    this.period = "daily", // varsayılan günlük
+    this.period = "daily",
+    this.isWeeklyAuto = false,
   });
 
   TaskModel copyWith({
@@ -28,12 +32,14 @@ class TaskModel extends HiveObject {
     String? category,
     bool? isCompleted,
     String? period,
+    bool? isWeeklyAuto,
   }) {
     return TaskModel(
       title: title ?? this.title,
       category: category ?? this.category,
       isCompleted: isCompleted ?? this.isCompleted,
       period: period ?? this.period,
+      isWeeklyAuto: isWeeklyAuto ?? this.isWeeklyAuto,
     );
   }
 }

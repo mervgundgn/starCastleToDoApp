@@ -30,9 +30,14 @@ dependencies:
   google_fonts: ^6.2.1
   lottie: ^3.1.2
   confetti: ^0.7.0
+
+  # Localization (aktif kullanmasak da hazır)
   flutter_localizations:
     sdk: flutter
   intl: ^0.20.2
+
+  # Security
+  crypto: ^3.0.6
 
 dev_dependencies:
   flutter_test:
@@ -40,10 +45,11 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   very_good_analysis: ^5.1.0
 
-  # Hive model generation (gerekirse)
+  # Hive model generation
   build_runner: ^2.4.13
   hive_generator: ^2.0.1
   analyzer: ^6.4.1
+  hive_test: ^1.0.1
 
 flutter:
   uses-material-design: true
@@ -73,3 +79,6 @@ flutter:
     - assets/stickers/jobs/
     - assets/stickers/princess/
     - assets/stickers/superheroes/
+
+    # Illustrations (Empty states, rehber ekranlar)
+    - assets/illustrations/

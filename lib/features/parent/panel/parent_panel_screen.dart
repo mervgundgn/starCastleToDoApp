@@ -1,163 +1,174 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../services/reset_service.dart';
 
 class ParentPanelScreen extends StatelessWidget {
   const ParentPanelScreen({super.key});
 
+  Future<void> _confirmReset(BuildContext context) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Verileri Sıfırla"),
+        content: const Text(
+          "Tüm görevler, ödüller, ayarlar ve koleksiyonlar silinecek. Emin misiniz?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("İptal"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: const Text("Evet, Sıfırla"),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      await ResetService.resetAllData();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Tüm veriler silindi ✅")),
+        );
+        context.go("/child/home");
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Kart renkleri (pastel, çocuk-dostu)
-    const _lavender = Color(0xFFEDE7FF);
-    const _pink     = Color(0xFFFDE2F3);
-    const _mint     = Color(0xFFE6FFF6);
-    const _sunny    = Color(0xFFFFF6D8);
-
-    // Metin rengi: koyu mor (yüksek kontrast yerine yumuşak)
-    const _textColor = Color(0xFF3D2E69);
-
     final items = <_PanelItem>[
       _PanelItem(
         title: 'Görev Ekle',
         icon: 'assets/icons/icon_task_default.png',
         route: '/add-task',
-        gradient: const [_pink, Colors.white],
       ),
       _PanelItem(
         title: 'Raporlar',
         icon: 'assets/icons/icon_progress.png',
         route: '/parent/reports',
-        gradient: const [_sunny, Colors.white],
       ),
       _PanelItem(
         title: 'PIN Değiştir',
         icon: 'assets/icons/icon_settings.png',
         route: '/parent/change-pin',
-        gradient: const [_mint, Colors.white],
       ),
       _PanelItem(
         title: 'Profil Düzenle',
         icon: 'assets/icons/edit_profile_icon.png',
         route: '/parent/edit-profile',
-        gradient: const [_lavender, Colors.white],
+      ),
+      _PanelItem(
+        title: 'Ödül Ekle',
+        icon: 'assets/icons/icon_reward.png',
+        route: '/parent/add-reward',
+      ),
+      _PanelItem(
+        title: 'Ödülleri Yönet',
+        icon: 'assets/icons/icon_reward.png',
+        route: '/parent/manage-rewards',
+      ),
+      _PanelItem(
+        title: 'Tüm Verileri Sıfırla',
+        icon: 'assets/icons/icon_delete.png', // ✅ artık bu ikon kullanılacak
+        route: 'reset',
+        isReset: true,
       ),
     ];
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: const Text('Ebeveyn Paneli'),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          // Daha morumsu dreamy gradient 🌌
-          gradient: LinearGradient(
-            colors: [Color(0xFF6F4DD4), Color(0xFF8A63E6), Color(0xFFC6A7FF)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            "assets/backgrounds/castle/bg_castle.png",
+            fit: BoxFit.cover,
           ),
-        ),
-        child: GridView.builder(
-          padding: const EdgeInsets.fromLTRB(20, kToolbarHeight + 32, 20, 24),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 0.92, // hizalamayı toparlar
+          SafeArea(
+            child: Column(
+              children: [
+                AppBar(
+                  title: const Text("Ebeveyn Paneli"),
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  centerTitle: true,
+                  foregroundColor: Colors.white,
+                  leading: IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => context.go('/child/home'),
+                  ),
+                ),
+                Expanded(
+                  child: GridView.builder(
+                    padding: const EdgeInsets.all(20),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                    ),
+                    itemCount: items.length,
+                    itemBuilder: (context, i) {
+                      final item = items[i];
+                      return _PanelCard(item: item, onReset: () => _confirmReset(context));
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
-          itemCount: items.length,
-          itemBuilder: (context, i) {
-            final item = items[i];
-            return _PanelCard(
-              title: item.title,
-              iconPath: item.icon,
-              onTap: () => context.push(item.route),
-              colors: item.gradient,
-              textColor: _textColor,
-            );
-          },
-        ),
+        ],
       ),
     );
   }
 }
 
 class _PanelCard extends StatelessWidget {
-  const _PanelCard({
-    required this.title,
-    required this.iconPath,
-    required this.onTap,
-    required this.colors,
-    required this.textColor,
-  });
+  const _PanelCard({required this.item, required this.onReset});
 
-  final String title;
-  final String iconPath;
-  final VoidCallback onTap;
-  final List<Color> colors;
-  final Color textColor;
+  final _PanelItem item;
+  final VoidCallback onReset;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(24),
-        onTap: onTap,
-        child: Ink(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: colors,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 8,
-                offset: const Offset(2, 4),
+    return GestureDetector(
+      onTap: () {
+        if (item.isReset) {
+          onReset();
+        } else {
+          context.push(item.route);
+        }
+      },
+      child: Card(
+        color: item.isReset ? Colors.red.withOpacity(0.85) : Colors.white.withOpacity(0.85),
+        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              item.icon,
+              width: 50,
+              height: 50,
+              errorBuilder: (_, __, ___) => const Icon(
+                Icons.help_outline,
+                size: 50,
+                color: Colors.white,
               ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Büyük ikon (hata durumunda yedek ikon)
-                SizedBox(
-                  height: 72,
-                  child: Image.asset(
-                    iconPath,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Icon(
-                      Icons.image_not_supported,
-                      size: 56,
-                      color: Colors.black38,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: textColor.withOpacity(0.92),
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
             ),
-          ),
+            const SizedBox(height: 10),
+            Text(
+              item.title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: item.isReset ? Colors.white : Colors.deepPurple,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -169,11 +180,11 @@ class _PanelItem {
     required this.title,
     required this.icon,
     required this.route,
-    required this.gradient,
+    this.isReset = false,
   });
 
   final String title;
   final String icon;
   final String route;
-  final List<Color> gradient;
+  final bool isReset;
 }

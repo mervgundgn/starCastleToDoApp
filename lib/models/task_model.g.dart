@@ -21,13 +21,14 @@ class TaskModelAdapter extends TypeAdapter<TaskModel> {
       category: fields[1] as String,
       isCompleted: fields[2] as bool,
       period: fields[3] as String,
+      isWeeklyAuto: fields[4] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, TaskModel obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.title)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class TaskModelAdapter extends TypeAdapter<TaskModel> {
       ..writeByte(2)
       ..write(obj.isCompleted)
       ..writeByte(3)
-      ..write(obj.period);
+      ..write(obj.period)
+      ..writeByte(4)
+      ..write(obj.isWeeklyAuto);
   }
 
   @override

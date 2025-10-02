@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../services/hive/hive_service.dart';
+import '../../../services/pin_service.dart';
 
 class PinScreen extends StatefulWidget {
   const PinScreen({super.key});
@@ -15,14 +15,29 @@ class _PinScreenState extends State<PinScreen> {
   String errorMessage = "";
 
   Future<void> _checkPin() async {
-    final box = HiveService.settingsBox;
-    final savedPin = box.get("parentPin", defaultValue: "1234");
+    final pin = _pinController.text.trim();
 
-    if (_pinController.text == savedPin) {
+    // 🔒 Eğer kilit süresi varsa kullanıcıyı beklet
+    final remaining = PinService.remainingLockSeconds();
+    if (remaining > 0) {
+      setState(() {
+        errorMessage = "Çok fazla hatalı deneme! $remaining saniye bekleyin.";
+      });
+      return;
+    }
+
+    final success = await PinService.verifyPin(pin);
+    if (success) {
       context.go('/parent/panel');
     } else {
       setState(() => errorMessage = "Hatalı PIN!");
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    PinService.initDefaultPin(); // Varsayılan PIN (1234) yoksa oluştur
   }
 
   @override
