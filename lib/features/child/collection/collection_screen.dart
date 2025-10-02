@@ -1,112 +1,72 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import '../../../services/hive/hive_service.dart';
+import 'collection_detail_screen.dart';
 
-class CollectionScreen extends StatefulWidget {
+class CollectionScreen extends StatelessWidget {
   const CollectionScreen({super.key});
 
   @override
-  State<CollectionScreen> createState() => _CollectionScreenState();
-}
-
-class _CollectionScreenState extends State<CollectionScreen> {
-  late Box stickersBox;
-
-  final Map<String, String> albums = {
-    "Prensesler": "assets/albums/princess/princess_cover.png",
-    "Süper Kahramanlar": "assets/albums/superheroes/superhero_cover.png",
-    "Çiçekler": "assets/albums/flowers/flower_cover.png",
-    "Arabalar": "assets/albums/cars/car_cover.png",
-    "Meslekler": "assets/albums/jobs/job_cover.png",
-  };
-
-  @override
-  void initState() {
-    super.initState();
-    stickersBox = Hive.box("stickersBox");
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final categories = {
+      "princess": "Prensesler",
+      "superheroes": "Süper Kahramanlar",
+      "flowers": "Çiçekler",
+      "cars": "Arabalar",
+      "jobs": "Meslekler",
+    };
+
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: GridView.builder(
-          itemCount: albums.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 0.8,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-          ),
-          itemBuilder: (context, index) {
-            final title = albums.keys.elementAt(index);
-            final cover = albums.values.elementAt(index);
-
-            return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => AlbumDetailScreen(albumTitle: title),
-                  ),
-                );
-              },
-              child: Column(
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Image.asset(
-                        cover,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class AlbumDetailScreen extends StatelessWidget {
-  final String albumTitle;
-  const AlbumDetailScreen({super.key, required this.albumTitle});
-
-  @override
-  Widget build(BuildContext context) {
-    final stickersBox = Hive.box("stickersBox");
-    final stickers = stickersBox.get(albumTitle, defaultValue: <String>[]).cast<String>();
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(albumTitle),
-      ),
       body: GridView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: stickers.length,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
+          crossAxisCount: 2,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
         ),
+        itemCount: categories.length,
         itemBuilder: (context, index) {
-          final stickerPath = stickers[index];
-          return Image.asset(
-            stickerPath,
-            fit: BoxFit.contain,
+          final key = categories.keys.elementAt(index);
+          final name = categories.values.elementAt(index);
+
+          // 🔹 Hive’den kategoriye ait sticker listesi al
+          final stickers =
+          HiveService.stickersBox.get(key, defaultValue: <String>[]) as List;
+          final count = stickers.length;
+
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      CollectionDetailScreen(category: key, title: name),
+                ),
+              );
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 4,
+                    offset: Offset(2, 2),
+                  )
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(name,
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text("$count sticker"),
+                ],
+              ),
+            ),
           );
         },
       ),

@@ -1,6 +1,6 @@
 import 'package:hive/hive.dart';
 
-part 'task_model.g.dart'; // build_runner ile üretilecek adapter
+part 'task_model.g.dart';
 
 @HiveType(typeId: 0)
 class TaskModel extends HiveObject {
@@ -13,21 +13,27 @@ class TaskModel extends HiveObject {
   @HiveField(2)
   bool isCompleted;
 
+  @HiveField(3)
+  final String period; // 🔹 "daily" veya "weekly"
+
   TaskModel({
     required this.title,
     required this.category,
     this.isCompleted = false,
+    this.period = "daily", // varsayılan günlük
   });
 
   TaskModel copyWith({
     String? title,
     String? category,
     bool? isCompleted,
+    String? period,
   }) {
     return TaskModel(
       title: title ?? this.title,
       category: category ?? this.category,
       isCompleted: isCompleted ?? this.isCompleted,
+      period: period ?? this.period,
     );
   }
 }

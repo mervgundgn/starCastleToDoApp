@@ -16,6 +16,8 @@ class _ParentPanelScreenState extends State<ParentPanelScreen> {
   late Box settingsBox;
   final TextEditingController _customTaskController = TextEditingController();
 
+  String _selectedTaskType = "daily"; // 🔹 Günlük / Haftalık seçimi
+
   final List<String> readyTasks = [
     "Diş fırçala",
     "Su iç",
@@ -43,35 +45,57 @@ class _ParentPanelScreenState extends State<ParentPanelScreen> {
       title: title,
       category: "custom",
       isCompleted: false,
+      period: _selectedTaskType, // ✅ modeldeki alan
     );
     HiveService.addTask(task);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Görev eklendi: $title ✅")),
+      SnackBar(content: Text("Görev eklendi: $title ($_selectedTaskType) ✅")),
     );
 
     setState(() {});
   }
 
   void _openReports() {
-    context.push("/parent/reports"); // main.dart'taki route ile uyumlu
+    context.push("/parent/reports");
+  }
+
+  Future<void> _resetData() async {
+    await Hive.box('tasksBox').clear();
+    await Hive.box('stickersBox').clear();
+    await Hive.box('settingsBox').clear();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Tüm veriler temizlendi ✅")),
+    );
+
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.neutralGrey,
-      appBar: AppBar(
-        title: const Text("Ebeveyn Paneli"),
-      ),
+      appBar: AppBar(title: const Text("Ebeveyn Paneli")),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-            const Text(
-              "Hazır Görevler",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            // 🔹 Görev Tipi Seç
+            const Text("Görev Tipi Seç", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            DropdownButtonFormField<String>(
+              value: _selectedTaskType,
+              decoration: const InputDecoration(border: OutlineInputBorder()),
+              items: const [
+                DropdownMenuItem(value: "daily", child: Text("Günlük Görev")),
+                DropdownMenuItem(value: "weekly", child: Text("Haftalık Görev")),
+              ],
+              onChanged: (value) => setState(() => _selectedTaskType = value!),
             ),
+            const SizedBox(height: 20),
+
+            // 🔹 Hazır Görevler
+            const Text("Hazır Görevler", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             Wrap(
               spacing: 8,
               children: readyTasks
@@ -83,10 +107,8 @@ class _ParentPanelScreenState extends State<ParentPanelScreen> {
             ),
             const SizedBox(height: 20),
 
-            const Text(
-              "Özel Görev Ekle",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            // 🔹 Özel Görev Ekle
+            const Text("Özel Görev Ekle", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             Row(
               children: [
                 Expanded(
@@ -112,7 +134,7 @@ class _ParentPanelScreenState extends State<ParentPanelScreen> {
             ),
             const SizedBox(height: 20),
 
-            // ✅ PIN değiştir — route üzerinden ChangePinScreen'e gider
+            // 🔹 PIN değiştir
             ElevatedButton.icon(
               onPressed: () => context.push("/parent/change-pin"),
               icon: const Icon(Icons.lock),
@@ -120,11 +142,20 @@ class _ParentPanelScreenState extends State<ParentPanelScreen> {
             ),
             const SizedBox(height: 12),
 
-            // Raporlar
+            // 🔹 Raporlar
             ElevatedButton.icon(
               onPressed: _openReports,
               icon: const Icon(Icons.bar_chart),
               label: const Text("Raporları Gör"),
+            ),
+            const SizedBox(height: 20),
+
+            // 🔹 Verileri sıfırlama
+            ElevatedButton.icon(
+              onPressed: _resetData,
+              icon: const Icon(Icons.delete_forever),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+              label: const Text("Tüm Verileri Sıfırla"),
             ),
           ],
         ),

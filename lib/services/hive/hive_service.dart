@@ -1,37 +1,30 @@
+import 'dart:math';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../models/task_model.dart';
 
 class HiveService {
   // Kutular
   static late Box<TaskModel> tasksBox;
-  static late Box<dynamic> stickersBox; // ✅ dynamic olacak
+  static late Box<dynamic> stickersBox;
   static late Box settingsBox;
 
   /// Hive başlatma
   static Future<void> init() async {
-    // Adapter kaydı (sadece 1 kez yapılmalı)
     if (!Hive.isAdapterRegistered(0)) {
       Hive.registerAdapter(TaskModelAdapter());
     }
 
-    // 🗃 Kutular (önce kontrol et, sonra aç)
-    if (!Hive.isBoxOpen('tasksBox')) {
-      tasksBox = await Hive.openBox<TaskModel>('tasksBox');
-    } else {
-      tasksBox = Hive.box<TaskModel>('tasksBox');
-    }
+    tasksBox = Hive.isBoxOpen('tasksBox')
+        ? Hive.box<TaskModel>('tasksBox')
+        : await Hive.openBox<TaskModel>('tasksBox');
 
-    if (!Hive.isBoxOpen('stickersBox')) {
-      stickersBox = await Hive.openBox<dynamic>('stickersBox'); // ✅
-    } else {
-      stickersBox = Hive.box<dynamic>('stickersBox'); // ✅
-    }
+    stickersBox = Hive.isBoxOpen('stickersBox')
+        ? Hive.box<dynamic>('stickersBox')
+        : await Hive.openBox<dynamic>('stickersBox');
 
-    if (!Hive.isBoxOpen('settingsBox')) {
-      settingsBox = await Hive.openBox('settingsBox');
-    } else {
-      settingsBox = Hive.box('settingsBox');
-    }
+    settingsBox = Hive.isBoxOpen('settingsBox')
+        ? Hive.box('settingsBox')
+        : await Hive.openBox('settingsBox');
   }
 
   // ---------------------------
@@ -51,56 +44,60 @@ class HiveService {
     if (task != null) {
       task.isCompleted = true;
       task.save();
+
+      // Tamamlanan göreve sticker ver
+      addRandomSticker();
     }
   }
 
   // ---------------------------
-  // Stickerlar
+  // Stickerlar (tam random)
   // ---------------------------
 
-  static String addRandomSticker(String category) {
-    final stickers = (stickersBox.get(category, defaultValue: <String>[]) as List).cast<String>();
+  static String addRandomSticker() {
+    final random = Random();
 
+    // Kategoriler ve limitler
     final limits = {
+      "cars": 20,
+      "flowers": 20,
+      "jobs": 10,
       "princess": 20,
       "superheroes": 20,
-      "flowers": 20,
-      "cars": 20,
-      "jobs": 10,
     };
 
     final prefixes = {
+      "cars": "car",
+      "flowers": "flower",
+      "jobs": "job",
       "princess": "princess",
       "superheroes": "superhero",
-      "flowers": "flower",
-      "cars": "car",
-      "jobs": "job",
     };
 
-    final total = limits[category] ?? 0;
-    if (stickers.length >= total) return stickers.last;
+    // Rastgele kategori seç
+    final categories = limits.keys.toList();
+    final category = categories[random.nextInt(categories.length)];
 
-    final nextIndex = stickers.length + 1;
-    final prefix = prefixes[category] ?? category;
+    // Rastgele index seç
+    final total = limits[category]!;
+    final index = random.nextInt(total) + 1;
 
-    // 🔹 Örn: flower_01, car_02
-    final newSticker = "${prefix}_${nextIndex.toString().padLeft(2, '0')}";
+    final prefix = prefixes[category]!;
+    final sticker = "${prefix}_${index.toString().padLeft(2, '0')}";
 
-    stickers.add(newSticker);
-    stickersBox.put(category, stickers);
+    print("🎁 Sticker verildi: $sticker (kategori: $category)");
 
-    return newSticker;
+    // Geriye path dön → UI’de kolay kullanım
+    return "$category/$sticker";
   }
 
-  static bool isCategoryComplete(String category) {
-    final stickers = (stickersBox.get(category, defaultValue: <String>[]) as List).cast<String>();
-    final limits = {
-      "princess": 20,
-      "superheroes": 20,
-      "flowers": 20,
-      "cars": 20,
-      "jobs": 10,
-    };
-    return stickers.length >= (limits[category] ?? 0);
+  // ---------------------------
+  // Debug amaçlı reset
+  // ---------------------------
+
+  static Future<void> resetAll() async {
+    await tasksBox.clear();
+    await stickersBox.clear();
+    await settingsBox.clear();
   }
 }

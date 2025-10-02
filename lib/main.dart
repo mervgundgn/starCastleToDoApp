@@ -11,7 +11,7 @@ import 'features/child/home/home_screen.dart';
 import 'features/parent/auth/pin_screen.dart';
 import 'features/parent/panel/parent_panel_screen.dart';
 import 'features/parent/reports/reports_screen.dart';
-import 'features/parent/settings/change_pin_screen.dart'; // ✅ ekledik
+import 'features/parent/settings/change_pin_screen.dart';
 import 'services/crashlytics/crashlytics_service.dart';
 import 'services/hive/hive_service.dart';
 import 'firebase_options.dart';
@@ -41,7 +41,7 @@ final appRouter = GoRouter(
       builder: (context, state) => const ReportsScreen(),
     ),
     GoRoute(
-      path: "/parent/change-pin", // ✅ PIN route eklendi
+      path: "/parent/change-pin",
       builder: (context, state) => const ChangePinScreen(),
     ),
   ],
@@ -61,6 +61,13 @@ Future<void> main() async {
   }
 
   await Hive.initFlutter();
+
+  // 📌 TEST: Her açılışta verileri sıfırla (önce sil, sonra init et)
+  await Hive.deleteBoxFromDisk('tasksBox');
+  await Hive.deleteBoxFromDisk('stickersBox');
+  await Hive.deleteBoxFromDisk('settingsBox');
+  debugPrint("🔥 Hive kutuları sıfırlandı (TEST)");
+
   await HiveService.init();
 
   runApp(const ProviderScope(child: StarCastleApp()));
