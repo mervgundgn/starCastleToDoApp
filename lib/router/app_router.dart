@@ -15,6 +15,7 @@ import '../features/parent/panel/parent_panel_screen.dart';
 import '../features/parent/reports/reports_screen.dart';
 import '../features/parent/settings/change_pin_screen.dart';
 import '../features/parent/settings/edit_profile_screen.dart';
+import '../features/parent/settings/set_pin_screen.dart';
 
 // ✅ Ödül ekranları
 import '../features/parent/rewards/add_reward_screen.dart';
@@ -78,8 +79,12 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const ReportsScreen(),
     ),
     GoRoute(
+      path: "/parent/set-pin",
+      builder: (context, state) => const SetPinScreen(),
+    ),
+    GoRoute(
       path: "/parent/change-pin",
-      builder: (context, state) => const ChangePinScreen(),
+      builder: (context, state) => const ChangePinScreen(), // ✅ EKLENDİ
     ),
     GoRoute(
       path: "/parent/edit-profile",

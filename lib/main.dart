@@ -24,11 +24,11 @@ Future<void> main() async {
 
   await Hive.initFlutter();
 
-  // 📌 TEST: Her açılışta verileri sıfırla (önce sil, sonra init et)
-  await Hive.deleteBoxFromDisk('tasksBox');
-  await Hive.deleteBoxFromDisk('stickersBox');
-  await Hive.deleteBoxFromDisk('settingsBox');
-  debugPrint("🔥 Hive kutuları sıfırlandı (TEST)");
+  // ❌ TEST: kutuları her açılışta silme (kaldırıldı)
+  // await Hive.deleteBoxFromDisk('tasksBox');
+  // await Hive.deleteBoxFromDisk('stickersBox');
+  // await Hive.deleteBoxFromDisk('settingsBox');
+  // debugPrint("🔥 Hive kutuları sıfırlandı (TEST)");
 
   await HiveService.init();
 

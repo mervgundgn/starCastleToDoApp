@@ -46,7 +46,21 @@ class CollectionScreen extends ConsumerWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text("Koleksiyon"),
+        title: const Text(
+          "Koleksiyon",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            shadows: [
+              Shadow(
+                color: Colors.black54,
+                offset: Offset(1, 1),
+                blurRadius: 2,
+              ),
+            ],
+          ),
+          overflow: TextOverflow.ellipsis,
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -60,6 +74,9 @@ class CollectionScreen extends ConsumerWidget {
             "assets/backgrounds/castle/bg_castle.png",
             fit: BoxFit.cover,
           ),
+
+          // 🔹 Overlay – kontrastı yumuşat
+          Container(color: Colors.white.withOpacity(0.22)),
 
           SafeArea(
             child: Padding(
@@ -96,15 +113,17 @@ class CollectionScreen extends ConsumerWidget {
                         totalCount > 0 ? collectedCount / totalCount : 0.0;
 
                         return GestureDetector(
-                          onTap: () => context.push("/collection/$key", extra: {
-                            "title": title,
-                          }),
+                          onTap: () => context.push(
+                            "/collection/$key",
+                            extra: {"title": title},
+                          ),
                           child: Card(
-                            color: Colors.white.withOpacity(0.88),
+                            color: Colors.white.withOpacity(0.9),
+                            elevation: 4,
+                            shadowColor: Colors.black26,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            elevation: 4,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
@@ -118,23 +137,27 @@ class CollectionScreen extends ConsumerWidget {
                                       cover,
                                       fit: BoxFit.cover,
                                       errorBuilder: (_, __, ___) => const Center(
-                                        child: Icon(Icons.photo_album_outlined,
-                                            size: 48),
+                                        child: Icon(
+                                          Icons.photo_album_outlined,
+                                          size: 48,
+                                          color: Colors.grey,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                                // 📖 Alt bilgi alanı
+                                // 📖 Alt bilgi
                                 Container(
-                                  padding: const EdgeInsets.all(10),
+                                  padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.95),
+                                    color: Colors.white.withOpacity(0.92),
                                     borderRadius: const BorderRadius.vertical(
                                       bottom: Radius.circular(20),
                                     ),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         title,
@@ -142,8 +165,8 @@ class CollectionScreen extends ConsumerWidget {
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
                                           fontSize: 16,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.black87,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.deepPurple,
                                         ),
                                       ),
                                       const SizedBox(height: 8),
@@ -151,8 +174,10 @@ class CollectionScreen extends ConsumerWidget {
                                         borderRadius: BorderRadius.circular(8),
                                         child: LinearProgressIndicator(
                                           value: progress.clamp(0.0, 1.0),
-                                          color: AppColors.pastelPurple,
-                                          backgroundColor: Colors.grey[200],
+                                          color: AppColors.primaryBlue
+                                              .withOpacity(0.85),
+                                          backgroundColor:
+                                          Colors.grey.withOpacity(0.2),
                                           minHeight: 6,
                                         ),
                                       ),
@@ -160,8 +185,9 @@ class CollectionScreen extends ConsumerWidget {
                                       Text(
                                         "$collectedCount / $totalCount",
                                         style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey[700],
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.black.withOpacity(0.7),
                                         ),
                                       ),
                                     ],

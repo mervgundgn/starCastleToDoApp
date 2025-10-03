@@ -3,12 +3,10 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../../models/task_model.dart';
 
 class HiveService {
-  // Kutular
   static late Box<TaskModel> tasksBox;
   static late Box<dynamic> stickersBox;
   static late Box settingsBox;
 
-  /// Hive başlatma
   static Future<void> init() async {
     if (!Hive.isAdapterRegistered(0)) {
       Hive.registerAdapter(TaskModelAdapter());
@@ -26,7 +24,7 @@ class HiveService {
         ? Hive.box('settingsBox')
         : await Hive.openBox('settingsBox');
 
-    // Varsayılan haftalık görev kontrolü
+    // Varsayılan haftalık görev
     final exists = tasksBox.values.any((t) => t.isWeeklyAuto);
     if (!exists) {
       final defaultWeekly = TaskModel(
@@ -36,13 +34,10 @@ class HiveService {
         isWeeklyAuto: true,
       );
       await tasksBox.add(defaultWeekly);
-      print("✅ Default haftalık görev eklendi");
     }
   }
 
-  // ---------------------------
-  // Görevler
-  // ---------------------------
+  // ---------------- Görevler ----------------
 
   static void addTask(TaskModel task) {
     tasksBox.add(task);
@@ -52,13 +47,11 @@ class HiveService {
     return tasksBox.values.toList();
   }
 
-  static void completeTask(int index) {
-    final task = tasksBox.getAt(index);
-    if (task != null) {
-      task.isCompleted = true;
-      task.save();
-    }
+  static void completeTask(TaskModel task) {
+    task.isCompleted = true;
+    task.save();
   }
+
 
   static bool areAllDailyTasksCompleted() {
     final tasks = getTasks();
@@ -67,9 +60,27 @@ class HiveService {
     return daily.every((t) => t.isCompleted);
   }
 
-  // ---------------------------
-  // Stickerlar
-  // ---------------------------
+  /// 🔹 Görev reset mekanizması (daily/weekly reset)
+  static void resetExpiredTasks() {
+    final now = DateTime.now();
+    for (var task in tasksBox.values) {
+      if (task.isCompleted && task.lastCompleted != null) {
+        final diff = now.difference(task.lastCompleted!);
+
+        if (task.period == "daily" && diff.inDays >= 1) {
+          task.isCompleted = false;
+          task.save();
+        }
+
+        if (task.period == "weekly" && diff.inDays >= 7) {
+          task.isCompleted = false;
+          task.save();
+        }
+      }
+    }
+  }
+
+  // ---------------- Stickerlar ----------------
 
   static String addRandomSticker() {
     final random = Random();
@@ -98,9 +109,6 @@ class HiveService {
     final prefix = prefixes[category]!;
     final sticker = "${prefix}_${index.toString().padLeft(2, '0')}";
 
-    print("🎁 Sticker verildi: $sticker (kategori: $category)");
-
-    // Box'a ekleme
     final current = stickersBox.get(category, defaultValue: <String>[]);
     final updated = List<String>.from(current)..add(sticker);
     stickersBox.put(category, updated);
@@ -108,13 +116,11 @@ class HiveService {
     return "$category/$sticker";
   }
 
-  /// 🔹 Kategoriye göre stickerları getir
   static List<String> getStickersByCategory(String category) {
     final list = stickersBox.get(category, defaultValue: <String>[]);
     return List<String>.from(list);
   }
 
-  /// 🔹 Tüm stickerları getir
   static Map<String, List<String>> getAllStickers() {
     final result = <String, List<String>>{};
     for (var key in stickersBox.keys) {
@@ -124,14 +130,7 @@ class HiveService {
     return result;
   }
 
-  /// 🔹 Sticker kategorilerini sabit olarak döndür (UI için)
-  static List<String> getStickerCategories() {
-    return ["Prenses", "Süper Kahraman", "Çiçek", "Araba", "Meslek"];
-  }
-
-  // ---------------------------
-  // Gerçek ödüller
-  // ---------------------------
+  // ---------------- Ödüller ----------------
 
   static void addRealReward(String reward) {
     final rewards = settingsBox.get("realRewards", defaultValue: <String>[]);
@@ -164,9 +163,7 @@ class HiveService {
     return rewards[random.nextInt(rewards.length)];
   }
 
-  // ---------------------------
-  // Reset
-  // ---------------------------
+  // ---------------- Reset ----------------
 
   static Future<void> resetAll() async {
     await tasksBox.clear();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../services/hive/hive_service.dart';
 import '../../../models/task_model.dart';
 import '../../../core/widgets/info_banner.dart';
+import '../../../core/constants/app_colors.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -20,19 +21,22 @@ class _TasksScreenState extends State<TasksScreen>
     _tabController = TabController(length: 2, vsync: this);
   }
 
-  void _completeTask(int index, TaskModel task) {
+  void _completeTask(TaskModel task) {
     if (task.isCompleted) return;
 
-    HiveService.completeTask(index);
+    HiveService.completeTask(task);
 
-    // Günlük görevler tamamlandı mı?
     if (task.period == "daily" && HiveService.areAllDailyTasksCompleted()) {
       final stickerPath = HiveService.addRandomSticker();
-
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text("Harika 🎉"),
+          backgroundColor: AppColors.neutralGrey.withOpacity(0.9),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text("Harika 🎉",
+              style: TextStyle(fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -60,13 +64,16 @@ class _TasksScreenState extends State<TasksScreen>
       );
     }
 
-    // Haftalık görev → ebeveyn ödülü popup
     if (task.period == "weekly") {
       final reward = HiveService.getRandomRealReward();
       if (reward != null) {
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
+            backgroundColor: AppColors.neutralGrey.withOpacity(0.9),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: const Text("Haftalık Görev Tamamlandı 🎁"),
             content: Text("Kazandığın ödül: $reward"),
             actions: [
@@ -107,19 +114,24 @@ class _TasksScreenState extends State<TasksScreen>
         final isAutoWeekly = task.isWeeklyAuto;
 
         return GestureDetector(
-          onTap: () => _completeTask(index, task),
+          onTap: () => _completeTask(task),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 400),
+            duration: const Duration(milliseconds: 350),
             decoration: BoxDecoration(
               color: task.isCompleted
-                  ? Colors.greenAccent.shade100.withOpacity(0.9)
-                  : Colors.white.withOpacity(0.9),
+                  ? AppColors.mintGreen.withOpacity(0.6)
+                  : AppColors.neutralGrey.withOpacity(0.8),
               borderRadius: BorderRadius.circular(20),
-              boxShadow: const [
+              border: Border.all(
+                color: task.isCompleted
+                    ? Colors.green.withOpacity(0.4)
+                    : Colors.black12,
+              ),
+              boxShadow: [
                 BoxShadow(
-                  color: Colors.black26,
+                  color: Colors.black.withOpacity(0.05),
                   blurRadius: 4,
-                  offset: Offset(2, 2),
+                  offset: const Offset(2, 2),
                 ),
               ],
             ),
@@ -127,28 +139,34 @@ class _TasksScreenState extends State<TasksScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (isAutoWeekly)
-                  const Icon(Icons.star, size: 50, color: Colors.amber)
+                  const Icon(Icons.star, size: 44, color: Colors.amber)
                 else
                   Image.asset(
                     "assets/icons/icon_task_default.png",
-                    width: 50,
-                    height: 50,
+                    width: 44,
+                    height: 44,
                     errorBuilder: (_, __, ___) =>
-                    const Icon(Icons.help_outline, size: 50),
+                    const Icon(Icons.help_outline, size: 44),
                   ),
                 const SizedBox(height: 8),
                 Text(
                   task.title,
                   textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontWeight:
                     isAutoWeekly ? FontWeight.bold : FontWeight.normal,
-                    color: isAutoWeekly ? Colors.deepPurple : Colors.black,
+                    fontSize: 14,
+                    color: Colors.black.withOpacity(0.7),
                   ),
                 ),
                 if (task.isCompleted)
-                  const Icon(Icons.check_circle,
-                      color: Colors.green, size: 28),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child:
+                    Icon(Icons.check_circle, color: Colors.green, size: 24),
+                  ),
               ],
             ),
           ),
@@ -159,6 +177,9 @@ class _TasksScreenState extends State<TasksScreen>
 
   @override
   Widget build(BuildContext context) {
+    // 🔹 Görevleri her açılışta resetle
+    HiveService.resetExpiredTasks();
+
     final tasks = HiveService.getTasks();
     final dailyTasks = tasks.where((t) => t.period == "daily").toList();
     final weeklyTasks = tasks.where((t) => t.period == "weekly").toList();
@@ -166,12 +187,22 @@ class _TasksScreenState extends State<TasksScreen>
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text("Görevler"),
+        title: const Text(
+          "Görevler",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         bottom: TabBar(
           controller: _tabController,
+          indicator: BoxDecoration(
+            color: Colors.white.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          labelColor: Colors.deepPurple,
+          unselectedLabelColor: Colors.white70,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
           tabs: const [
             Tab(text: "Günlük"),
             Tab(text: "Haftalık"),
@@ -185,6 +216,7 @@ class _TasksScreenState extends State<TasksScreen>
             "assets/backgrounds/castle/bg_castle.png",
             fit: BoxFit.cover,
           ),
+          Container(color: Colors.white.withOpacity(0.25)),
           SafeArea(
             child: TabBarView(
               controller: _tabController,

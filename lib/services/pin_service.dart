@@ -1,72 +1,54 @@
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive/hive.dart';
+import 'hive/hive_service.dart';
 
 class PinService {
-  static final _box = Hive.box("settingsBox");
+  static const _pinKey = "pin";
+  static const _lockKey = "lockUntil";
 
-  static const _pinKey = "parentPin";
-  static const _failCountKey = "pinFailCount";
-  static const _lockUntilKey = "pinLockUntil";
+  /// Varsayılan PIN oluşturma (1234 yok artık, null bırakıyoruz)
+  static Future<void> initDefaultPin() async {
+    if (HiveService.settingsBox == null || !HiveService.settingsBox.isOpen) {
+      HiveService.settingsBox = await Hive.openBox("settingsBox");
+    }
+    final box = HiveService.settingsBox;
 
-  /// Hash fonksiyonu
-  static String _hashPin(String pin) {
-    return sha256.convert(utf8.encode(pin)).toString();
+    if (!box.containsKey(_pinKey)) {
+      await box.put(_pinKey, null);
+    }
   }
 
-  /// Varsayılan PIN kaydet (1234)
-  static Future<void> initDefaultPin() async {
-    if (!_box.containsKey(_pinKey)) {
-      await _box.put(_pinKey, _hashPin("1234"));
-    }
+  /// PIN var mı kontrolü
+  static Future<bool> hasPin() async {
+    final box = HiveService.settingsBox;
+    final pin = box.get(_pinKey);
+    return pin != null && pin.toString().isNotEmpty;
   }
 
   /// PIN doğrulama
   static Future<bool> verifyPin(String pin) async {
-    final lockUntil = _box.get(_lockUntilKey, defaultValue: 0);
-    final now = DateTime.now().millisecondsSinceEpoch;
-
-    // Halen kilitli mi?
-    if (lockUntil > now) {
-      return false; // kilitli
-    }
-
-    final storedHash = _box.get(_pinKey);
-    if (storedHash == _hashPin(pin)) {
-      // doğru → sayaç sıfırlansın
-      await _box.put(_failCountKey, 0);
-      return true;
-    } else {
-      // yanlış giriş
-      final failCount = (_box.get(_failCountKey, defaultValue: 0) as int) + 1;
-      await _box.put(_failCountKey, failCount);
-
-      if (failCount >= 5) {
-        // 30 saniye kilitle
-        final lockUntil = now + (30 * 1000);
-        await _box.put(_lockUntilKey, lockUntil);
-        await _box.put(_failCountKey, 0);
-      }
-      return false;
-    }
+    final box = HiveService.settingsBox;
+    return box.get(_pinKey) == pin;
   }
 
-  /// PIN değiştirme
-  static Future<bool> changePin(String oldPin, String newPin) async {
-    final storedHash = _box.get(_pinKey);
-    if (storedHash == _hashPin(oldPin)) {
-      await _box.put(_pinKey, _hashPin(newPin));
-      return true;
-    } else {
-      return false;
-    }
+  /// PIN değiştirme (kontrolsüz)
+  static Future<void> forceChangePin(String newPin) async {
+    final box = HiveService.settingsBox;
+    await box.put(_pinKey, newPin);
   }
 
-  /// Kilit süresi (kullanıcıya mesaj göstermek için)
-  static int remainingLockSeconds() {
-    final lockUntil = _box.get(_lockUntilKey, defaultValue: 0);
+  /// Yanlış PIN girişinde kilit süresi başlat
+  static Future<void> lockForSeconds(int seconds) async {
+    final until = DateTime.now().millisecondsSinceEpoch + (seconds * 1000);
+    await HiveService.settingsBox.put(_lockKey, until);
+  }
+
+  /// Kilit açılmasına kalan süre
+  static Future<int> remainingLockSeconds() async {
+    final until = HiveService.settingsBox.get(_lockKey, defaultValue: 0);
     final now = DateTime.now().millisecondsSinceEpoch;
-    final diff = (lockUntil - now) ~/ 1000;
-    return diff > 0 ? diff : 0;
+    if (until == 0 || now >= until) {
+      return 0;
+    }
+    return ((until - now) / 1000).ceil();
   }
 }

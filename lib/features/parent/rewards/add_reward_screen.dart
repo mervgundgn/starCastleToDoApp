@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; // ✅ GoRouter import
 import '../../../services/hive/hive_service.dart';
 
 class AddRewardScreen extends StatefulWidget {
@@ -18,6 +19,10 @@ class _AddRewardScreenState extends State<AddRewardScreen> {
     "🧸": Icons.toys,
     "🚲": Icons.pedal_bike,
     "🎮": Icons.videogame_asset,
+    "⚽": Icons.sports_soccer,
+    "📚": Icons.book,
+    "🎨": Icons.brush,
+    "🍕": Icons.local_pizza,
   };
 
   @override
@@ -41,7 +46,8 @@ class _AddRewardScreenState extends State<AddRewardScreen> {
       SnackBar(content: Text("Ödül eklendi: $reward ✅")),
     );
 
-    Navigator.pop(context);
+    // ✅ Kaydedince ManageRewardsScreen'e dön
+    context.go('/parent/manage-rewards');
   }
 
   @override
@@ -50,16 +56,19 @@ class _AddRewardScreenState extends State<AddRewardScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset("assets/backgrounds/castle/bg_castle.png", fit: BoxFit.cover),
-
+          Image.asset(
+            "assets/backgrounds/castle/bg_castle.png",
+            fit: BoxFit.cover,
+          ),
           SafeArea(
             child: Column(
               children: [
+                // 🔹 Custom AppBar
                 Row(
                   children: [
                     IconButton(
                       icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => context.go('/parent/manage-rewards'), // ✅ geri dönüş
                     ),
                     const Text(
                       "Gerçek Ödül Ekle",
@@ -67,7 +76,13 @@ class _AddRewardScreenState extends State<AddRewardScreen> {
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
-                        shadows: [Shadow(color: Colors.black54, offset: Offset(1,1), blurRadius: 2)],
+                        shadows: [
+                          Shadow(
+                            color: Colors.black54,
+                            offset: Offset(1, 1),
+                            blurRadius: 2,
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -80,38 +95,65 @@ class _AddRewardScreenState extends State<AddRewardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        // Ödül adı
                         TextField(
                           controller: _rewardController,
                           decoration: InputDecoration(
                             hintText: "Örn: Oyuncak, Parka Gitme, Dışarıda Yemek",
                             filled: true,
-                            fillColor: Colors.white.withOpacity(0.8),
+                            fillColor: Colors.white.withOpacity(0.85),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
                               borderSide: BorderSide.none,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 24),
 
-                        const Text("İkon seç:",
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 12,
+                        // İkon seçimi
+                        const Text(
+                          "İkon Seç",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black54,
+                                offset: Offset(1, 1),
+                                blurRadius: 2,
+                              )
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
                           children: icons.entries.map((entry) {
                             return ChoiceChip(
-                              label: Text(entry.key, style: const TextStyle(fontSize: 20)),
+                              label: Text(entry.key, style: const TextStyle(fontSize: 22)),
                               selected: _selectedIcon == entry.key,
                               onSelected: (_) {
                                 setState(() => _selectedIcon = entry.key);
                               },
+                              selectedColor: Colors.deepPurple.shade100,
+                              backgroundColor: Colors.white.withOpacity(0.8),
+                              labelStyle: TextStyle(
+                                color: _selectedIcon == entry.key
+                                    ? Colors.deepPurple
+                                    : Colors.black87,
+                                fontWeight: FontWeight.w600,
+                              ),
                             );
                           }).toList(),
                         ),
-
                         const SizedBox(height: 30),
 
+                        // Kaydet butonu
                         ElevatedButton(
                           onPressed: _saveReward,
                           style: ElevatedButton.styleFrom(
@@ -120,9 +162,16 @@ class _AddRewardScreenState extends State<AddRewardScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
+                            elevation: 5,
                           ),
-                          child: const Text("Kaydet",
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white)),
+                          child: const Text(
+                            "Kaydet",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ],
                     ),

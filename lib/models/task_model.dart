@@ -19,12 +19,16 @@ class TaskModel extends HiveObject {
   @HiveField(4)
   final bool isWeeklyAuto; // 🔹 otomatik haftalık görev mi?
 
+  @HiveField(5)
+  DateTime? lastCompleted; // 🔹 en son tamamlandığı zaman
+
   TaskModel({
     required this.title,
     required this.category,
     this.isCompleted = false,
     this.period = "daily",
     this.isWeeklyAuto = false,
+    this.lastCompleted,
   });
 
   TaskModel copyWith({
@@ -33,6 +37,7 @@ class TaskModel extends HiveObject {
     bool? isCompleted,
     String? period,
     bool? isWeeklyAuto,
+    DateTime? lastCompleted,
   }) {
     return TaskModel(
       title: title ?? this.title,
@@ -40,6 +45,7 @@ class TaskModel extends HiveObject {
       isCompleted: isCompleted ?? this.isCompleted,
       period: period ?? this.period,
       isWeeklyAuto: isWeeklyAuto ?? this.isWeeklyAuto,
+      lastCompleted: lastCompleted ?? this.lastCompleted,
     );
   }
 }

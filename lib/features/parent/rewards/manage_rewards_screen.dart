@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../services/hive/hive_service.dart';
 import '../../../core/widgets/info_banner.dart';
 
@@ -42,7 +43,7 @@ class _ManageRewardsScreenState extends State<ManageRewardsScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => context.pop(), // ✅ GoRouter kullan
             child: const Text("Vazgeç"),
           ),
           TextButton(
@@ -51,7 +52,7 @@ class _ManageRewardsScreenState extends State<ManageRewardsScreen> {
               if (newValue.isNotEmpty) {
                 HiveService.updateRealReward(index, newValue);
                 setState(() => rewards = HiveService.getRealRewards());
-                Navigator.pop(context);
+                context.pop(); // ✅ GoRouter kullan
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text("Ödül güncellendi: $newValue ✅")),
@@ -80,26 +81,42 @@ class _ManageRewardsScreenState extends State<ManageRewardsScreen> {
           SafeArea(
             child: Column(
               children: [
-                // 🔹 Özel AppBar
+                // 🔹 Custom AppBar
                 Row(
                   children: [
                     IconButton(
                       icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => context.go('/parent/panel'), // ✅ geri dönüş
                     ),
-                    const Text(
-                      "Ödülleri Yönet",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    const Expanded(
+                      child: Text(
+                        "Ödülleri Yönet",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black54,
+                              offset: Offset(1, 1),
+                              blurRadius: 2,
+                            ),
+                          ],
+                        ),
+                        textAlign: TextAlign.left,
                       ),
+                    ),
+                    // 🔹 Ödül Ekle Butonu
+                    IconButton(
+                      icon: const Icon(Icons.add_circle, color: Colors.white, size: 28),
+                      tooltip: "Ödül Ekle",
+                      onPressed: () => context.push("/parent/add-reward"),
                     ),
                   ],
                 ),
                 const SizedBox(height: 20),
 
-                // 🔹 Liste veya Boş Durum
+                // 🔹 Ödül Listesi veya Boş Durum
                 Expanded(
                   child: hasRewards
                       ? ListView.builder(
@@ -147,7 +164,8 @@ class _ManageRewardsScreenState extends State<ManageRewardsScreen> {
                   )
                       : const Center(
                     child: InfoBanner(
-                      text: "Henüz ödül eklenmemiş 🎁\nEbeveyn panelinden yeni ödül ekleyebilirsin.",
+                      text:
+                      "Henüz ödül eklenmemiş 🎁\nYukarıdaki + butonuna tıklayarak ödül ekleyebilirsin.",
                     ),
                   ),
                 ),

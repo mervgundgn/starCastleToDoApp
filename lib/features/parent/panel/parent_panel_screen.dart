@@ -11,15 +11,16 @@ class ParentPanelScreen extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         title: const Text("Verileri Sıfırla"),
         content: const Text(
-          "Tüm görevler, ödüller, ayarlar ve koleksiyonlar silinecek. Emin misiniz?",
+          "Tüm görevler, ödüller, ayarlar ve koleksiyonlar silinecek.\n\n"
+              "Bu işlem geri alınamaz. Emin misiniz?",
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
+            onPressed: () => context.pop(false), // ✅ GoRouter pop
             child: const Text("İptal"),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
+            onPressed: () => context.pop(true), // ✅ GoRouter pop
             style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
             child: const Text("Evet, Sıfırla"),
           ),
@@ -33,7 +34,7 @@ class ParentPanelScreen extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Tüm veriler silindi ✅")),
         );
-        context.go("/child/home");
+        context.go("/child/home"); // ✅ çocuk ana sayfaya yönlendir
       }
     }
   }
@@ -62,20 +63,9 @@ class ParentPanelScreen extends StatelessWidget {
         route: '/parent/edit-profile',
       ),
       _PanelItem(
-        title: 'Ödül Ekle',
-        icon: 'assets/icons/icon_reward.png',
-        route: '/parent/add-reward',
-      ),
-      _PanelItem(
         title: 'Ödülleri Yönet',
         icon: 'assets/icons/icon_reward.png',
         route: '/parent/manage-rewards',
-      ),
-      _PanelItem(
-        title: 'Tüm Verileri Sıfırla',
-        icon: 'assets/icons/icon_delete.png', // ✅ artık bu ikon kullanılacak
-        route: 'reset',
-        isReset: true,
       ),
     ];
 
@@ -83,10 +73,7 @@ class ParentPanelScreen extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(
-            "assets/backgrounds/castle/bg_castle.png",
-            fit: BoxFit.cover,
-          ),
+          Image.asset("assets/backgrounds/castle/bg_castle.png", fit: BoxFit.cover),
           SafeArea(
             child: Column(
               children: [
@@ -98,7 +85,7 @@ class ParentPanelScreen extends StatelessWidget {
                   foregroundColor: Colors.white,
                   leading: IconButton(
                     icon: const Icon(Icons.arrow_back),
-                    onPressed: () => context.go('/child/home'),
+                    onPressed: () => context.go('/child/home'), // ✅ GoRouter
                   ),
                 ),
                 Expanded(
@@ -112,10 +99,41 @@ class ParentPanelScreen extends StatelessWidget {
                     itemCount: items.length,
                     itemBuilder: (context, i) {
                       final item = items[i];
-                      return _PanelCard(item: item, onReset: () => _confirmReset(context));
+                      return _PanelCard(item: item);
                     },
                   ),
                 ),
+                // 🔹 Reset butonu
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: GestureDetector(
+                    onTap: () => _confirmReset(context),
+                    child: Container(
+                      width: double.infinity,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade700.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.redAccent, width: 1.5),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.lock, color: Colors.white, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            "Tüm Verileri Sıfırla",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
               ],
             ),
           ),
@@ -126,24 +144,19 @@ class ParentPanelScreen extends StatelessWidget {
 }
 
 class _PanelCard extends StatelessWidget {
-  const _PanelCard({required this.item, required this.onReset});
+  const _PanelCard({required this.item});
 
   final _PanelItem item;
-  final VoidCallback onReset;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        if (item.isReset) {
-          onReset();
-        } else {
-          context.push(item.route);
-        }
-      },
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: () => context.go(item.route), // ✅ GoRouter navigation
       child: Card(
-        color: item.isReset ? Colors.red.withOpacity(0.85) : Colors.white.withOpacity(0.85),
-        elevation: 3,
+        color: Colors.white.withOpacity(0.85),
+        elevation: 4,
+        shadowColor: Colors.black26,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -155,17 +168,17 @@ class _PanelCard extends StatelessWidget {
               errorBuilder: (_, __, ___) => const Icon(
                 Icons.help_outline,
                 size: 50,
-                color: Colors.white,
+                color: Colors.grey,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Text(
               item.title,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: item.isReset ? Colors.white : Colors.deepPurple,
+                color: Colors.deepPurple,
               ),
             ),
           ],
@@ -180,11 +193,9 @@ class _PanelItem {
     required this.title,
     required this.icon,
     required this.route,
-    this.isReset = false,
   });
 
   final String title;
   final String icon;
   final String route;
-  final bool isReset;
 }
